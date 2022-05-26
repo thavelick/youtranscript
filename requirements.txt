@@ -1,0 +1,3 @@
+youtube_transcript_api==0.4.4
+fastpunct==2.0.2
+youtube-search-python==1.6.5
