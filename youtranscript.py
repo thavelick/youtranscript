@@ -1,8 +1,8 @@
 #!/usr/bin/python3
+"website that displays the transcripts of a youtube videos"
 import http.server
 import socketserver
 from youtube_transcript_api import YouTubeTranscriptApi
-from fastpunct import FastPunct
 from youtubesearchpython import VideosSearch
 
 def get_youtube_search_results(search_term: str) -> list[dict]:
@@ -25,7 +25,7 @@ def get_video_link(youtube_id):
     Returns:
         A relative link to the transcript page for the video.
     """
-    return '/transcript?v={}'.format(youtube_id)
+    return f'/transcript?v={youtube_id}'
 
 def get_table_with_search_results(results):
     """
@@ -35,7 +35,12 @@ def get_table_with_search_results(results):
     Returns:
         A html table with the search results.
     """
-    table_row_template = '<tr><td><img src="{thumbnail_url}"></td><td><a href="{link}">{title}</a></td></tr>'
+    table_row_template = """
+    <tr>
+        <td><img src="{thumbnail_url}"></td>
+        <td><a href="{link}">{title}</a></td>
+    </tr>
+    """
     table_parts = ['<table>']
     for video in results:
         youtube_id = video['id']
@@ -63,21 +68,7 @@ def get_transcript(youtube_id: str) -> list:
     transcript = YouTubeTranscriptApi.get_transcript(youtube_id)
     return transcript
 
-def add_punctuation_to_transcript(transcript: list) -> list:
-    """
-    Adds punctuation to the transcript.
-    Args:
-        transcript: The transcript to add punctuation as a list of 
-            dictionaries with the start and text of each line.
-    Returns:
-        The transcript with punctuation added.
-    """
-    punct = FastPunct()
-    for i in range(len(transcript)):
-        transcript[i]['text'] = punct.add_punctuation(transcript[i]['text'])
-    return transcript 
-
-def get_table_with_transcript(youtube_id: str, add_punctuation: bool = False) -> str:
+def get_table_with_transcript(youtube_id: str) -> str:
     """
     Returns a html table with the transcript of the video.
     Args:
@@ -86,13 +77,11 @@ def get_table_with_transcript(youtube_id: str, add_punctuation: bool = False) ->
     Returns:
         A html table with the transcript of the video.
     """
- 
+
     table_row_template = '<tr><td>{start}</td><td>{text}</td></tr>'
     table_parts = ['<table>']
     transcript = get_transcript(youtube_id)
-    if add_punctuation:
-        transcript = add_punctuation_to_transcript(transcript)
-    
+
     last_start = ''
     for line in transcript:
         start = human_readable_time_length(line['start'])
@@ -101,12 +90,12 @@ def get_table_with_transcript(youtube_id: str, add_punctuation: bool = False) ->
             start_cell = '&nbsp;'
         else:
             last_start = start
-            start_cell = '<a href="https://www.youtube.com/watch?v={}&t={}">{}</a>'.format(
-                youtube_id, 
-                int(line['start']), 
-                start
+            start_seconds = line['start']
+            start_cell = (
+                '<a href="https://www.youtube.com/watch'
+                f'?v={youtube_id}&t={start_seconds}">{start}</a>'
             )
-      
+
         table_parts.append(table_row_template.format(
             start=start_cell,
             text=line['text']
@@ -125,7 +114,7 @@ def human_readable_time_length(seconds: int) -> str:
         A human readable time length.
     """
 
-    if seconds < 60: 
+    if seconds < 60:
         unit = 'second'
         # round to 15 second intervals
         amount = int(seconds / 15) * 15
@@ -135,14 +124,19 @@ def human_readable_time_length(seconds: int) -> str:
     else:
         unit = 'hour'
         amount = int(seconds / (60 * 60))
-    
+
     if int(amount) != 1:
         unit += 's'
-    
-    return '{} {}'.format(int(amount), unit)
+
+    return f'{int(amount)} {unit}'
 
 
 class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
+    """
+    Serves website that shows youtube transcripts.
+    """
+
+    # pylint: disable=invalid-name
     def do_GET(self):
         "Route GET requests."
         path = self.get_path_without_query_string()
@@ -219,12 +213,18 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(bytes(html, 'utf-8'))
         self.send_response(status_code)
-        self.send_header('Content-type', 'text/html; charset=utf-8') 
+        self.send_header('Content-type', 'text/html; charset=utf-8')
         self.send_header('Content-length', str(len(html)))
         self.end_headers()
         self.wfile.write(html.encode())
 
-    def do_html_page_response(self, title: str, content: str, status_code: int=200, css:str|None=None) -> None:
+    def do_html_page_response(
+        self,
+        title: str,
+        content: str,
+        status_code: int=200,
+        css:str|None=None
+    ) -> None:
         """
         Sends an html page response.
         Args:
@@ -236,9 +236,9 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
         """
         style_tag = ''
         if css:
-            style_tag = '<style>{}</style>'.format(css)
+            style_tag = f'<style>{css}</style>'
 
-        html = '''
+        html = f'''
         <!DOCTYPE html>
         <html>
             <head>
@@ -249,13 +249,13 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
                 {content}
             </body>
         </html>
-        '''.format(title=title, content=content, style_tag=style_tag)
+        '''
         self.do_html_response(html, status_code)
 
     def do_homepage(self) -> None:
         """
         Handles the homepage.
-        
+
         Shows a simple search form.
         """
         css_for_search_form = self.get_css_for_search_form()
@@ -310,7 +310,7 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
         results = get_youtube_search_results(search_term)
         table = get_table_with_search_results(results)
         self.do_html_page_response(
-            title='Search results for "{}"'.format(search_term),
+            title=f'Search results for "{search_term}"',
             content=table
         )
 
@@ -323,17 +323,17 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
         youtube_id = self.get_query_param('v')
         table = get_table_with_transcript(youtube_id)
         self.do_html_page_response(
-            title='Transcript for "{}"'.format(youtube_id),
+            title=f'Transcript for "{youtube_id}"',
             content=table
         )
 
     def do_watch_page(self) -> None:
         "redirect to the transcript page."
         youtube_id = self.get_query_param('v')
-        self.do_permanent_redirect_response('/transcript?v={}'.format(youtube_id))
+        self.do_permanent_redirect_response(f'/transcript?v={youtube_id}')
 
 
-if __name__ == '__main__':   
+if __name__ == '__main__':
     PORT = 8008
     socketserver.TCPServer.allow_reuse_address = True
     with socketserver.TCPServer(("", PORT), YouTranscriptHandler) as httpd:
