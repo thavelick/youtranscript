@@ -49,6 +49,5 @@ http://localhost:8008/ and it will work.
 * Responsive design
 
 ## Created By
-
 * [Tristan Havelick](https:/tristanhavelick.com) - programming
-* An anonymous fediverse user - idea
+* [@twizzay-code](https://github.com/twizzay-code) - idea
