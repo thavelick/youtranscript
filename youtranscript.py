@@ -12,7 +12,7 @@ def get_youtube_search_results(search_term: str) -> list[dict]:
 
     Args:
         search_term: The search term to search for.
-    Retuns:
+    Returns:
         youtube search results as a list of dictionaries.
     """
     videos_search = VideosSearch(search_term, limit=10)
@@ -52,11 +52,11 @@ def get_table_with_search_results(results):
         youtube_id = video['id']
         link = get_video_link(youtube_id)
         title = video['title']
-        thumbnaiil_url = video['thumbnails'][0]['url']
+        thumbnail_url = video['thumbnails'][0]['url']
         table_parts.append(table_row_template.format(
             link=link,
             title=title,
-            thumbnail_url=thumbnaiil_url,
+            thumbnail_url=thumbnail_url,
         ))
     table_parts.append('</table>')
 
@@ -221,11 +221,6 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
         self.send_response(status_code)
         self.send_header('Content-type', 'text/html')
         self.end_headers()
-        self.wfile.write(bytes(html, 'utf-8'))
-        self.send_response(status_code)
-        self.send_header('Content-type', 'text/html; charset=utf-8')
-        self.send_header('Content-length', str(len(html)))
-        self.end_headers()
         self.wfile.write(html.encode())
 
     def do_html_page_response(
@@ -338,7 +333,7 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
         )
 
     def do_watch_page(self) -> None:
-        """Pedirect to the transcript page."""
+        """Redirect to the transcript page."""
         youtube_id = self.get_query_param('v')
         self.do_permanent_redirect_response(f'/transcript?v={youtube_id}')
 
