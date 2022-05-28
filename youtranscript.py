@@ -5,7 +5,7 @@ from youtube_transcript_api import YouTubeTranscriptApi
 from fastpunct import FastPunct
 from youtubesearchpython import VideosSearch
 
-def get_youtube_search_results(search_term: str) -> list:
+def get_youtube_search_results(search_term: str) -> list[dict]:
     """
     Returns a list of youtube search results.
     Args:
@@ -170,7 +170,7 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
             path = path[:path.index('?')]
         return path
 
-    def get_query_string_if_exists(self) -> str:
+    def get_query_string_if_exists(self) -> str|None:
         """Returns the query string if it exists.
         Returns:
             The query string if it exists, None otherwise.
@@ -186,16 +186,16 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
         Args:
             param_name: The name of the query param.
         Returns:
-            The value of the query param.
+            The value of the query param or an empty string.
         """
         query_string = self.get_query_string_if_exists()
         if not query_string:
-            return None
+            return ''
         params = query_string.split('&')
         for param in params:
             if param.startswith(param_name):
                 return param[param.index('=') + 1:]
-        return None
+        return ''
 
     def do_permanent_redirect_response(self, location: str) -> None:
         """
@@ -220,7 +220,7 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
         self.wfile.write(bytes(html, 'utf-8'))
         self.send_response(status_code)
         self.send_header('Content-type', 'text/html; charset=utf-8') 
-        self.send_header('Content-length', len(html))
+        self.send_header('Content-length', str(len(html)))
         self.end_headers()
         self.wfile.write(html.encode())
 
