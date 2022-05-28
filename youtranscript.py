@@ -1,13 +1,15 @@
 #!/usr/bin/python3
-"website that displays the transcripts of a youtube videos"
+"""website that displays the transcripts of a youtube videos."""
 import http.server
 import socketserver
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtubesearchpython import VideosSearch
 
+
 def get_youtube_search_results(search_term: str) -> list[dict]:
     """
-    Returns a list of youtube search results.
+    Return a list of youtube search results.
+
     Args:
         search_term: The search term to search for.
     Retuns:
@@ -17,9 +19,11 @@ def get_youtube_search_results(search_term: str) -> list[dict]:
     results = videos_search.result()
     return results.get('result', [])
 
+
 def get_video_link(youtube_id):
     """
-    Gets a link to the transcript page for the video.
+    Get a link to the transcript page for the video.
+
     Args:
         youtube_id: The youtube id of the video. For example: 'bXq4oQ-fXpE'
     Returns:
@@ -27,9 +31,11 @@ def get_video_link(youtube_id):
     """
     return f'/transcript?v={youtube_id}'
 
+
 def get_table_with_search_results(results):
     """
-    Returns a html table with the search results.
+    Return a html table with the search results.
+
     Args:
         results: A list of youtube search results.
     Returns:
@@ -56,28 +62,30 @@ def get_table_with_search_results(results):
 
     return ''.join(table_parts)
 
+
 def get_transcript(youtube_id: str) -> list:
     """
-    Pulls the transcript for a video from YouTube.
+    Pull the transcript for a video from YouTube.
+
     Args:
         youtube_id: The youtube id of the video. For example: 'bXq4oQ-fXpE'
     Returns:
         A list of dictionaries with the start and text of each line.
     """
-
     transcript = YouTubeTranscriptApi.get_transcript(youtube_id)
     return transcript
 
+
 def get_table_with_transcript(youtube_id: str) -> str:
     """
-    Returns a html table with the transcript of the video.
+    Return a html table with the transcript of the video.
+
     Args:
         youtube_id: The youtube id of the video. For example: 'bXq4oQ-fXpE'
         add_punctuation: If True, adds punctuation to the transcript.
     Returns:
         A html table with the transcript of the video.
     """
-
     table_row_template = '<tr><td>{start}</td><td>{text}</td></tr>'
     table_parts = ['<table>']
     transcript = get_transcript(youtube_id)
@@ -105,15 +113,16 @@ def get_table_with_transcript(youtube_id: str) -> str:
 
     return ''.join(table_parts)
 
+
 def human_readable_time_length(seconds: int) -> str:
     """
-    Converts seconds to a human readable time length.
+    Convert seconds to a human readable time length.
+
     Args:
         seconds: The number of seconds to convert.
     Returns:
         A human readable time length.
     """
-
     if seconds < 60:
         unit = 'second'
         # round to 15 second intervals
@@ -132,13 +141,11 @@ def human_readable_time_length(seconds: int) -> str:
 
 
 class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
-    """
-    Serves website that shows youtube transcripts.
-    """
+    """Serve website that shows youtube transcripts."""
 
     # pylint: disable=invalid-name
     def do_GET(self):
-        "Route GET requests."
+        """Route GET requests."""
         path = self.get_path_without_query_string()
         routes = {
             '/': self.do_homepage,
@@ -158,25 +165,26 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
         routes[path]()
 
     def get_path_without_query_string(self) -> str:
-        "Returns the path without the query string."
+        """Return the path without the query string."""
         path = self.path
         if '?' in path:
             path = path[:path.index('?')]
         return path
 
-    def get_query_string_if_exists(self) -> str|None:
-        """Returns the query string if it exists.
+    def get_query_string_if_exists(self) -> str | None:
+        """Return the query string if it exists.
+
         Returns:
             The query string if it exists, None otherwise.
         """
-
         if '?' in self.path:
             return self.path[self.path.index('?') + 1:]
         return None
 
     def get_query_param(self, param_name) -> str:
         """
-        Returns the value of a query param.
+        Return the value of a query param.
+
         Args:
             param_name: The name of the query param.
         Returns:
@@ -193,7 +201,8 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
 
     def do_permanent_redirect_response(self, location: str) -> None:
         """
-        Sends a permanent redirect response.
+        Send a permanent redirect response.
+
         Args:
             location: The url to redirect to.
         """
@@ -201,9 +210,10 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
         self.send_header('Location', location)
         self.end_headers()
 
-    def do_html_response(self, html: str, status_code: int =200):
+    def do_html_response(self, html: str, status_code: int = 200):
         """
-        Sends an html response.
+        Send an html response.
+
         Args:
             html: The html to send.
             status_code: The status code to send.
@@ -222,11 +232,12 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
         self,
         title: str,
         content: str,
-        status_code: int=200,
-        css:str|None=None
+        status_code: int = 200,
+        css: str | None = None
     ) -> None:
         """
-        Sends an html page response.
+        Send an html page response.
+
         Args:
             title: The title of the page.
             content: The content of the page.
@@ -254,7 +265,7 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
 
     def do_homepage(self) -> None:
         """
-        Handles the homepage.
+        Handle the homepage.
 
         Shows a simple search form.
         """
@@ -270,10 +281,9 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
             css=css_for_search_form
         )
 
-    def get_css_for_search_form(self) -> str:
-        """
-        Returns the css for the search form.
-        """
+    @staticmethod
+    def get_css_for_search_form() -> str:
+        """Return the css for the search form."""
         return '''
         body {
             font-family: sans-serif;
@@ -302,7 +312,7 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
 
     def do_search_results_page(self) -> None:
         """
-        Handles the search results page.
+        Handle the search results page.
 
         Shows a list of search results.
         """
@@ -316,7 +326,7 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
 
     def do_transcript_page(self) -> None:
         """
-        Handles the transcript page.
+        Handle the transcript page.
 
         Shows a transcript for a youtube video.
         """
@@ -328,7 +338,7 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
         )
 
     def do_watch_page(self) -> None:
-        "redirect to the transcript page."
+        """Pedirect to the transcript page."""
         youtube_id = self.get_query_param('v')
         self.do_permanent_redirect_response(f'/transcript?v={youtube_id}')
 
