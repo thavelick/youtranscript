@@ -95,14 +95,14 @@ def get_table_with_transcript(youtube_id: str) -> str:
     Returns:
         A html table with the transcript of the video.
     """
-    table_row_template = '<tr><td>{start}</td><td>{text}</td></tr>'
+    table_row_template = '<tr><td valign="top">{start}</td><td>{text}</td></tr>'
     table_parts = ['<table>']
     transcript = get_transcript(youtube_id)
 
     for cue in transcript:
         table_parts.append(table_row_template.format(
             start=cue.youtube_link_tag(youtube_id),
-            text=cue.text
+            text=cue.html_text()
         ))
 
     table_parts.append('</table>')
@@ -215,7 +215,7 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
             status_code: The status code to send.
         """
         self.send_response(status_code)
-        self.send_header('Content-type', 'text/html')
+        self.send_header('Content-type', 'text/html; charset=utf-8')
         self.end_headers()
         self.wfile.write(html.encode())
 

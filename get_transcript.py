@@ -9,6 +9,7 @@ Once Invidious is updated to use the innertube api, for transcripts
 much of the code here can be removed.
 """
 
+from collections import deque
 from dataclasses import dataclass
 import json
 from urllib.request import Request, urlopen
@@ -19,14 +20,17 @@ from pprint import pprint
 class TranscriptCue:
     """A transcript cue."""
 
-    start: int # Time into the video when the cue starts in seconds.
+    duration: float # Length of the transcript cue in seconds.
+    start: float # Time into the video when the cue starts in seconds.
     text: str # Spoken text
+
 
     def start_time_text(self) -> str:
         """Return the start time of the cue in the form minutes:ss."""
-        minute_part = self.start // 60
-        second_part = self.start % 60
-        return f'{minute_part}12:{second_part:02d}'
+        start = int(self.start)
+        minute_part = start // 60
+        second_part = start % 60
+        return f'{minute_part}:{second_part:02d}'
 
     def youtube_link_tag(self, youtube_id: str) -> str:
         """Return a html link to the youtube video at the cue start time."""
@@ -35,6 +39,43 @@ class TranscriptCue:
             f'?v={youtube_id}&t={self.start}">{self.start_time_text()}</a>'
         )
 
+    def html_text(self):
+        """Return the text of the cue as html."""
+        return self.text.replace('\n', '<br>')
+
+def _consolidate_cues(
+        cues: list[TranscriptCue],
+        max_duration: int,
+    ) -> list[TranscriptCue]:
+    """Consolidate cues into a bigger chunks of text."""
+    if len(cues) == 0:
+        return []
+
+    consolidated_cues : list[TranscriptCue] = []
+    cues_remaining = deque(cues)
+    bigger_cue = TranscriptCue(
+        duration=0,
+        start=cues[0].start,
+        text=''
+    )
+    total_duration = 0.0
+
+    while len(cues_remaining) > 0:
+        cue = cues_remaining.popleft()
+        if bigger_cue.duration + cue.duration > max_duration:
+            consolidated_cues.append(bigger_cue)
+            bigger_cue = TranscriptCue(
+                duration=0,
+                start=cue.start,
+                text='',
+            )
+
+        total_duration += cue.duration
+        bigger_cue.duration += cue.duration
+        bigger_cue.text += f"{cue.text}\n"
+
+    consolidated_cues.append(bigger_cue)
+    return consolidated_cues
 
 def _get_youtube_page(url: str) -> str:
     """Get the page for a youtube url."""
@@ -123,13 +164,14 @@ def get_transcript(youtube_id: str) -> list[TranscriptCue]:
             ):
             for cue in group['transcriptCueGroupRenderer']['cues']:
                 renderer = cue['transcriptCueRenderer']
-                time = int(float(renderer['startOffsetMs']) / 1000)
+                duration = float(renderer['durationMs']) / 1000
+                start_time = float(renderer['startOffsetMs']) / 1000
                 text = renderer['cue']['simpleText']
                 transcript_log.append(
-                    TranscriptCue(time, text)
+                    TranscriptCue(duration, start_time, text)
                 )
 
-    return transcript_log
+    return _consolidate_cues(transcript_log, max_duration=30)
 
 
 if __name__ == '__main__':
