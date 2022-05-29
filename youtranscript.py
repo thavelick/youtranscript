@@ -146,6 +146,7 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
         routes = {
             '/': self.render_homepage,
             '/search': self.render_search_results_page,
+            '/style.css': self.render_style_css,
             '/transcript': self.render_transcript_page,
             '/watch': self.render_watch_page,
         }
@@ -203,6 +204,12 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
         """Send a permanent redirect response."""
         self.start_response(301, {'Location': location})
 
+    def render_file(self, file_path: str, content_type) -> None:
+        """Send a file response."""
+        with open(file_path, 'rb') as file:
+            self.start_response(200, {'Content-type': content_type})
+            self.wfile.write(file.read())
+
     def start_response(self, status_code: int, headers: dict) -> None:
         """Send status code and headers for the response."""
         self.send_response(status_code)
@@ -215,7 +222,6 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
         title: str,
         content: str,
         status_code: int = 200,
-        css: str | None = None
     ) -> None:
         """
         Send an html page response.
@@ -224,18 +230,13 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
             title: The title of the page.
             content: The content of the page.
             status_code: The status code to send.
-            css: The css to include in the page.
         """
-        style_tag = ''
-        if css:
-            style_tag = f'<style>{css}</style>'
-
         html = f'''
         <!DOCTYPE html>
         <html>
             <head>
                 <title>{title}</title>
-                {style_tag}
+                <link rel="stylesheet" href="/style.css" />
             </head>
             <body>
                 {content}
@@ -250,7 +251,6 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
 
         Shows a simple search form.
         """
-        css_for_search_form = self.get_css_for_search_form()
         self.render_html_page_response(
             title='Homepage',
             content='''
@@ -259,37 +259,11 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
                 <input type="submit" value="Search">
             </form>
             ''',
-            css=css_for_search_form
         )
 
-    @staticmethod
-    def get_css_for_search_form() -> str:
-        """Return the css for the search form."""
-        return '''
-        body {
-            font-family: sans-serif;
-        }
-
-        form {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        input {
-            margin: 10px;
-        }
-
-        input[type="text"] {
-            width: 300px;
-        }
-
-        input[type="submit"] {
-            width: 100px;
-            height: 30px;
-            font-size: 18px;
-        }
-        '''
+    def render_style_css(self) -> None:
+        """Render the style.css file."""
+        self.render_file('style.css', 'text/css; charset=utf-8')
 
     def render_search_results_page(self) -> None:
         """

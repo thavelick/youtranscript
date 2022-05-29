@@ -1,0 +1,23 @@
+body {
+    font-family: sans-serif;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+input {
+    margin: 10px;
+}
+
+input[type="text"] {
+    width: 300px;
+}
+
+input[type="submit"] {
+    width: 100px;
+    height: 30px;
+    font-size: 18px;
+}
