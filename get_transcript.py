@@ -17,14 +17,14 @@ from pprint import pprint
 
 YOUTUBE_URL = "https://www.youtube.com"
 
+
 @dataclass
 class TranscriptCue:
     """A transcript cue."""
 
-    duration: float # Length of the transcript cue in seconds.
-    start: float # Time into the video when the cue starts in seconds.
-    text: str # Spoken text
-
+    duration: float  # Length of the transcript cue in seconds.
+    start: float  # Time into the video when the cue starts in seconds.
+    text: str  # Spoken text
 
     def start_time_text(self) -> str:
         """Return the start time of the cue in the form minutes:ss."""
@@ -44,15 +44,15 @@ class TranscriptCue:
         """Return the text of the cue as html."""
         return self.text.replace('\n', '<br>')
 
+
 def _consolidate_cues(
         cues: list[TranscriptCue],
-        max_duration: int,
-    ) -> list[TranscriptCue]:
+        max_duration: int) -> list[TranscriptCue]:
     """Consolidate cues into a bigger chunks of text."""
     if len(cues) == 0:
         return []
 
-    consolidated_cues : list[TranscriptCue] = []
+    consolidated_cues: list[TranscriptCue] = []
     cues_remaining = deque(cues)
     bigger_cue = TranscriptCue(
         duration=0,
@@ -78,6 +78,7 @@ def _consolidate_cues(
     consolidated_cues.append(bigger_cue)
     return consolidated_cues
 
+
 def _get_youtube_page(url: str) -> str:
     """Get the page for a youtube url."""
     video_page_request = Request(url)
@@ -94,8 +95,7 @@ def _parse_value_from_page_text(text: str, key: str) -> str:
 
 def _get_transcript_from_innertube_api(
         serialized_share_entity: str,
-        inner_tube_api_key: str
-    ) -> dict:
+        inner_tube_api_key: str) -> dict:
     """
     Get a transcript from the innertube api.
 
@@ -134,6 +134,7 @@ def _get_transcript_from_innertube_api(
 
     return transcript_data
 
+
 def get_transcript(youtube_id: str) -> list[TranscriptCue]:
     """
     Get a transcript for a youtube url using the innertube api.
@@ -160,9 +161,8 @@ def get_transcript(youtube_id: str) -> list[TranscriptCue]:
     for action in transcript_data['actions']:
         for group in (
                 action['updateEngagementPanelAction']['content']
-                ['transcriptRenderer']['body']['transcriptBodyRenderer'
-                ]['cueGroups']
-            ):
+                ['transcriptRenderer']['body']['transcriptBodyRenderer']
+                ['cueGroups']):
             for cue in group['transcriptCueGroupRenderer']['cues']:
                 renderer = cue['transcriptCueRenderer']
                 duration = float(renderer['durationMs']) / 1000

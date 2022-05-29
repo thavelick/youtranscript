@@ -13,6 +13,7 @@ from get_transcript import get_transcript
 INVIDIOUS_HOST = os.environ.get('YOUTRANSCRIPT_INVIDIOUS_HOST')
 INVIDIOUS_API_URL = f'https://{INVIDIOUS_HOST}/api/v1'
 
+
 def get_youtube_search_results(search_term: str) -> list[dict]:
     """
     Return a list of youtube search results.
@@ -85,6 +86,7 @@ def get_matching_dictionary_from_list(
             return element
     return {}
 
+
 def get_table_with_transcript(youtube_id: str) -> str:
     """
     Return a html table with the transcript of the video.
@@ -95,7 +97,11 @@ def get_table_with_transcript(youtube_id: str) -> str:
     Returns:
         A html table with the transcript of the video.
     """
-    table_row_template = '<tr><td valign="top">{start}</td><td>{text}</td></tr>'
+    table_row_template = """
+        <tr>
+            <td valign="top">{start}</td><td>{text}</td>
+        </tr>
+    """
     table_parts = ['<table>']
     transcript = get_transcript(youtube_id)
 
@@ -108,32 +114,6 @@ def get_table_with_transcript(youtube_id: str) -> str:
     table_parts.append('</table>')
 
     return ''.join(table_parts)
-
-
-def human_readable_time_length(seconds: int) -> str:
-    """
-    Convert seconds to a human readable time length.
-
-    Args:
-        seconds: The number of seconds to convert.
-    Returns:
-        A human readable time length.
-    """
-    if seconds < 60:
-        unit = 'second'
-        # round to 15 second intervals
-        amount = int(seconds / 15) * 15
-    elif seconds < 3600:
-        unit = 'minute'
-        amount = int(seconds / 60)
-    else:
-        unit = 'hour'
-        amount = int(seconds / (60 * 60))
-
-    if int(amount) != 1:
-        unit += 's'
-
-    return f'{int(amount)} {unit}'
 
 
 class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
@@ -186,11 +166,11 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
         return ''
 
     def render_text(
-            self,
-            text: str,
-            content_type: str='text/plain',
-            status_code: int=200,
-        ) -> None:
+                self,
+                text: str,
+                content_type: str = 'text/plain',
+                status_code: int = 200,
+            ) -> None:
         """Send an http response with the given text."""
         self.start_response(
             status_code, {
@@ -243,7 +223,7 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
             </body>
         </html>
         '''
-        self.render_text(html,'text/html; charset=utf-8', status_code)
+        self.render_text(html, 'text/html; charset=utf-8', status_code)
 
     def render_homepage(self) -> None:
         """
