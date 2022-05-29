@@ -140,7 +140,7 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
     """Serve website that shows youtube transcripts."""
 
     # pylint: disable=invalid-name
-    def render_GET(self):
+    def do_GET(self):
         """Route GET requests."""
         path = self.get_path_without_query_string()
         routes = {
@@ -168,24 +168,13 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
         return path
 
     def get_query_string_if_exists(self) -> str | None:
-        """Return the query string if it exists.
-
-        Returns:
-            The query string if it exists, None otherwise.
-        """
+        """Return the query string if it exists."""
         if '?' in self.path:
             return self.path[self.path.index('?') + 1:]
         return None
 
     def get_query_param(self, param_name) -> str:
-        """
-        Return the value of a query param.
-
-        Args:
-            param_name: The name of the query param.
-        Returns:
-            The value of the query param or an empty string.
-        """
+        """Return the value of a query param."""
         query_string = self.get_query_string_if_exists()
         if not query_string:
             return ''
@@ -195,29 +184,31 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
                 return param[param.index('=') + 1:]
         return ''
 
-    def render_permanent_redirect_response(self, location: str) -> None:
-        """
-        Send a permanent redirect response.
+    def render_text(
+            self,
+            text: str,
+            content_type: str='text/plain',
+            status_code: int=200,
+        ) -> None:
+        """Send an http response with the given text."""
+        self.start_response(
+            status_code, {
+                'Content-type': content_type,
+                'Content-length': str(len(text)),
+            }
+        )
+        self.wfile.write(text.encode('utf-8'))
 
-        Args:
-            location: The url to redirect to.
-        """
-        self.send_response(301)
-        self.send_header('Location', location)
-        self.end_headers()
+    def render_redirect(self, location: str) -> None:
+        """Send a permanent redirect response."""
+        self.start_response(301, {'Location': location})
 
-    def render_html_response(self, html: str, status_code: int = 200):
-        """
-        Send an html response.
-
-        Args:
-            html: The html to send.
-            status_code: The status code to send.
-        """
+    def start_response(self, status_code: int, headers: dict) -> None:
+        """Send status code and headers for the response."""
         self.send_response(status_code)
-        self.send_header('Content-type', 'text/html; charset=utf-8')
+        for k, v in headers.items():
+            self.send_header(k, v)
         self.end_headers()
-        self.wfile.write(html.encode())
 
     def render_html_page_response(
         self,
@@ -234,7 +225,6 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
             content: The content of the page.
             status_code: The status code to send.
             css: The css to include in the page.
-
         """
         style_tag = ''
         if css:
@@ -252,7 +242,7 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
             </body>
         </html>
         '''
-        self.render_html_response(html, status_code)
+        self.render_text(html,'text/html; charset=utf-8', status_code)
 
     def render_homepage(self) -> None:
         """
@@ -331,7 +321,7 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
     def render_watch_page(self) -> None:
         """Redirect to the transcript page."""
         youtube_id = self.get_query_param('v')
-        self.render_permanent_redirect_response(f'/transcript?v={youtube_id}')
+        self.render_redirect(f'/transcript?v={youtube_id}')
 
 
 if __name__ == '__main__':
