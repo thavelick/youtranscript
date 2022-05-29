@@ -146,7 +146,7 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
         routes = {
             '/': self.render_homepage,
             '/search': self.render_search_results_page,
-            '/style.css': self.render_style_css,
+            '/style.css': lambda: self.render_file('style.css', 'text/css'),
             '/transcript': self.render_transcript_page,
             '/watch': self.render_watch_page,
         }
@@ -260,10 +260,6 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
             </form>
             ''',
         )
-
-    def render_style_css(self) -> None:
-        """Render the style.css file."""
-        self.render_file('style.css', 'text/css; charset=utf-8')
 
     def render_search_results_page(self) -> None:
         """
