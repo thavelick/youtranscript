@@ -140,18 +140,18 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
     """Serve website that shows youtube transcripts."""
 
     # pylint: disable=invalid-name
-    def do_GET(self):
+    def render_GET(self):
         """Route GET requests."""
         path = self.get_path_without_query_string()
         routes = {
-            '/': self.do_homepage,
-            '/search': self.do_search_results_page,
-            '/transcript': self.do_transcript_page,
-            '/watch': self.do_watch_page,
+            '/': self.render_homepage,
+            '/search': self.render_search_results_page,
+            '/transcript': self.render_transcript_page,
+            '/watch': self.render_watch_page,
         }
 
         if path not in routes:
-            self.do_html_page_response(
+            self.render_html_page_response(
                 title='Not found',
                 content='<h1>Not found</h1>',
                 status_code=404
@@ -195,7 +195,7 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
                 return param[param.index('=') + 1:]
         return ''
 
-    def do_permanent_redirect_response(self, location: str) -> None:
+    def render_permanent_redirect_response(self, location: str) -> None:
         """
         Send a permanent redirect response.
 
@@ -206,7 +206,7 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
         self.send_header('Location', location)
         self.end_headers()
 
-    def do_html_response(self, html: str, status_code: int = 200):
+    def render_html_response(self, html: str, status_code: int = 200):
         """
         Send an html response.
 
@@ -219,7 +219,7 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(html.encode())
 
-    def do_html_page_response(
+    def render_html_page_response(
         self,
         title: str,
         content: str,
@@ -252,16 +252,16 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
             </body>
         </html>
         '''
-        self.do_html_response(html, status_code)
+        self.render_html_response(html, status_code)
 
-    def do_homepage(self) -> None:
+    def render_homepage(self) -> None:
         """
         Handle the homepage.
 
         Shows a simple search form.
         """
         css_for_search_form = self.get_css_for_search_form()
-        self.do_html_page_response(
+        self.render_html_page_response(
             title='Homepage',
             content='''
             <form action="/search" method="get">
@@ -301,7 +301,7 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
         }
         '''
 
-    def do_search_results_page(self) -> None:
+    def render_search_results_page(self) -> None:
         """
         Handle the search results page.
 
@@ -310,12 +310,12 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
         search_term = self.get_query_param('search_term')
         results = get_youtube_search_results(search_term)
         table = get_table_with_search_results(results)
-        self.do_html_page_response(
+        self.render_html_page_response(
             title=f'Search results for "{search_term}"',
             content=table
         )
 
-    def do_transcript_page(self) -> None:
+    def render_transcript_page(self) -> None:
         """
         Handle the transcript page.
 
@@ -323,15 +323,15 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
         """
         youtube_id = self.get_query_param('v')
         table = get_table_with_transcript(youtube_id)
-        self.do_html_page_response(
+        self.render_html_page_response(
             title=f'Transcript for "{youtube_id}"',
             content=table
         )
 
-    def do_watch_page(self) -> None:
+    def render_watch_page(self) -> None:
         """Redirect to the transcript page."""
         youtube_id = self.get_query_param('v')
-        self.do_permanent_redirect_response(f'/transcript?v={youtube_id}')
+        self.render_permanent_redirect_response(f'/transcript?v={youtube_id}')
 
 
 if __name__ == '__main__':

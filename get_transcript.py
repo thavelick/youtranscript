@@ -15,6 +15,7 @@ import json
 from urllib.request import Request, urlopen
 from pprint import pprint
 
+YOUTUBE_URL = "https://www.youtube.com"
 
 @dataclass
 class TranscriptCue:
@@ -35,7 +36,7 @@ class TranscriptCue:
     def youtube_link_tag(self, youtube_id: str) -> str:
         """Return a html link to the youtube video at the cue start time."""
         return (
-            '<a href="https://www.youtube.com/watch'
+            f'<a href="{YOUTUBE_URL}/watch'
             f'?v={youtube_id}&t={self.start}">{self.start_time_text()}</a>'
         )
 
@@ -123,7 +124,7 @@ def _get_transcript_from_innertube_api(
     }
 
     transcript_request = Request(
-        f'https://www.youtube.com/youtubei/v1/get_transcript?key={inner_tube_api_key}',
+        f'{YOUTUBE_URL}/youtubei/v1/get_transcript?key={inner_tube_api_key}',
         json.dumps(payload).encode('utf-8'),
         {'Content-Type': 'application/json'},
     )
@@ -144,7 +145,7 @@ def get_transcript(youtube_id: str) -> list[TranscriptCue]:
     """
     transcript_log = []
 
-    text = _get_youtube_page(f"https://www.youtube.com/watch?v={youtube_id}")
+    text = _get_youtube_page(f"{YOUTUBE_URL}/watch?v={youtube_id}")
 
     innertube_api_key = _parse_value_from_page_text(text, 'INNERTUBE_API_KEY')
     serialized_share_entity = _parse_value_from_page_text(
