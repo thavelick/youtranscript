@@ -33,7 +33,6 @@ http://localhost:8008/ and it will work.
 # TODO
 * deal with bad youtube_ids gracefully (404)
 * choose a random invidious instance if one isn't specified
-* Use a template engine instead of hard-coding html
 * Clean up the design
   * The W3C's
     [Web Content Accessibility Guidelines](https://www.w3.org/TR/WCAG21/)

@@ -5,6 +5,7 @@ import json
 import os
 import socketserver
 import sys
+from functools import cache
 from urllib.request import Request, urlopen
 
 from get_transcript import get_transcript
@@ -14,15 +15,31 @@ INVIDIOUS_HOST = os.environ.get('YOUTRANSCRIPT_INVIDIOUS_HOST')
 INVIDIOUS_API_URL = f'https://{INVIDIOUS_HOST}/api/v1'
 
 
-def get_youtube_search_results(search_term: str) -> list[dict]:
+@cache
+def get_template(name: str) -> str:
+    """Return the a given html template."""
+    print('loading template:', name)
+    with open(f'templates/{name}.html', encoding='utf-8') as template_file:
+        template = template_file.read()
+    return template
+
+
+def fill_template(name: str, **kwargs) -> str:
     """
-    Return a list of youtube search results.
+    Return a html template with the given values.
 
     Args:
-        search_term: The search term to search for.
+        name: The name of the template.
+        **kwargs: The values to fill the template with.
     Returns:
-        youtube search results as a list of dictionaries.
+        A html template with the given values.
     """
+    template = get_template(name)
+    return template.format(**kwargs)
+
+
+def get_youtube_search_results(search_term: str) -> list[dict]:
+    """Return a list of youtube search results."""
     request = Request(
         f"{INVIDIOUS_API_URL}/search?q={search_term}&type=video"
     )
@@ -32,7 +49,7 @@ def get_youtube_search_results(search_term: str) -> list[dict]:
     return results
 
 
-def get_table_with_search_results(results):
+def get_table_with_search_results(results: list[dict]) -> str:
     """
     Return a html table with the search results.
 
@@ -40,12 +57,6 @@ def get_table_with_search_results(results):
         results: A list of youtube search results.
     Returns:
         A html table with the search results.
-    """
-    table_row_template = """
-    <tr>
-        <td><img src="{thumbnail_url}"></td>
-        <td><a href="{link}">{title}</a></td>
-    </tr>
     """
     table_parts = ['<table>']
     for video in results:
@@ -56,7 +67,8 @@ def get_table_with_search_results(results):
             video['videoThumbnails'], 'quality', 'medium'
         ).get('url')
 
-        table_parts.append(table_row_template.format(
+        table_parts.append(fill_template(
+            'search_result',
             link=link,
             title=title,
             thumbnail_url=thumbnail_url,
@@ -97,16 +109,12 @@ def get_table_with_transcript(youtube_id: str) -> str:
     Returns:
         A html table with the transcript of the video.
     """
-    table_row_template = """
-        <tr>
-            <td valign="top">{start}</td><td>{text}</td>
-        </tr>
-    """
     table_parts = ['<table>']
     transcript = get_transcript(youtube_id)
 
     for cue in transcript:
-        table_parts.append(table_row_template.format(
+        table_parts.append(fill_template(
+            'cue',
             start=cue.youtube_link_tag(youtube_id),
             text=cue.html_text()
         ))
@@ -211,18 +219,7 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
             content: The content of the page.
             status_code: The status code to send.
         """
-        html = f'''
-        <!DOCTYPE html>
-        <html>
-            <head>
-                <title>{title}</title>
-                <link rel="stylesheet" href="/style.css" />
-            </head>
-            <body>
-                {content}
-            </body>
-        </html>
-        '''
+        html = fill_template('layout', content=content, title=title)
         self.render_text(html, 'text/html; charset=utf-8', status_code)
 
     def render_homepage(self) -> None:
@@ -233,12 +230,7 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
         """
         self.render_html_page_response(
             title='Homepage',
-            content='''
-            <form action="/search" method="get">
-                <input type="text" name="search_term">
-                <input type="submit" value="Search">
-            </form>
-            ''',
+            content=get_template('search_box')
         )
 
     def render_search_results_page(self) -> None:
