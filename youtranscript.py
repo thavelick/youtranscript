@@ -1,9 +1,16 @@
 #!/usr/bin/python3
 """website that displays the transcripts of a youtube videos."""
 import http.server
+import json
+import os
 import socketserver
+import sys
+
+from urllib.request import Request, urlopen
 from youtube_transcript_api import YouTubeTranscriptApi
-from youtubesearchpython import VideosSearch
+
+
+INVIDIOUS_HOST = os.environ.get('YOUTRANSCRIPT_INVIDIOUS_HOST')
 
 
 def get_youtube_search_results(search_term: str) -> list[dict]:
@@ -15,9 +22,14 @@ def get_youtube_search_results(search_term: str) -> list[dict]:
     Returns:
         youtube search results as a list of dictionaries.
     """
-    videos_search = VideosSearch(search_term, limit=10)
-    results = videos_search.result()
-    return results.get('result', [])
+    # Get the results via the Invidious API using urllib.request:
+    request = Request(
+        f"https://{INVIDIOUS_HOST}/api/v1/search?q={search_term}&type=video"
+    )
+
+    with urlopen(request) as response:
+        results = json.loads(response.read())
+    return results
 
 
 def get_video_link(youtube_id):
@@ -49,10 +61,13 @@ def get_table_with_search_results(results):
     """
     table_parts = ['<table>']
     for video in results:
-        youtube_id = video['id']
+        youtube_id = video['videoId']
         link = get_video_link(youtube_id)
         title = video['title']
-        thumbnail_url = video['thumbnails'][0]['url']
+        thumbnail_url = get_matching_dictionary_from_list(
+            video['videoThumbnails'], 'quality', 'medium'
+        ).get('url')
+
         table_parts.append(table_row_template.format(
             link=link,
             title=title,
@@ -61,6 +76,27 @@ def get_table_with_search_results(results):
     table_parts.append('</table>')
 
     return ''.join(table_parts)
+
+
+def get_matching_dictionary_from_list(
+        list_of_dicts: list[dict],
+        key: str,
+        value: str) -> dict:
+    """
+    Return the element in a list of dictionaries that matches a key and value.
+
+    Args:
+        list_of_dicts: A list of dictionaries.
+        key: The key to search for.
+        value: The value to search for.
+    Returns:
+        The first element in a list of dictionaries that matches a key and
+        value or {} if no match is found.
+    """
+    for element in list_of_dicts:
+        if element[key] == value:
+            return element
+    return {}
 
 
 def get_transcript(youtube_id: str) -> list:
@@ -339,6 +375,13 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
 
 
 if __name__ == '__main__':
+    if not INVIDIOUS_HOST:
+        print(
+            'You must set the environment variable'
+            'YOUTRANSCRIPT_INVIDIOUS_HOST'
+        )
+        sys.exit(1)
+
     PORT = 8008
     socketserver.TCPServer.allow_reuse_address = True
     with socketserver.TCPServer(("", PORT), YouTranscriptHandler) as httpd:

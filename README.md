@@ -13,10 +13,18 @@ A frontend for youtube that shows transcripts instead of videos.
   pip install -r requirements.txt
   ```
 3. Start the server
-  ```
-  ./youtranscript.py
+  ```bash
+  # Make sure to use a real invidious host here
+  YOUTRANSCRIPT_INVIDIOUS_HOST=your-favorite.invidious.host ./youtranscript.py
   ```
 3. Open your browser to http://localhost:8008/
+
+### Environment variables
+
+* `YOUTRANSCRIPT_INVIDIOUS_HOST`: required -  the hostname of the invidious instance
+to use to pull youtube transcripts and search results. For a list of available
+instances check: https://api.invidious.io/. Make sure you pick one with a
+checkmark for API.
 
 ## Urls
 
@@ -25,23 +33,20 @@ http://localhost:8008/ and it will work.
 
 ## Dependencies
 * Python 3.10
-* youtube-search-python 1.6.5
 * youtube_transcript_api 0.4.4
 
 # TODO
 * Use a template engine instead of hard-coding html
 * Clean up the design
 * Add accessibility features
-* Add search to the results and transcript pages
+* Add search box to the results and transcript pages
 * Add title and other metadata to the transcript pages
 * Commission or make a cool logo
 * Add punctuation restoration to auto-generated transcripts
 * Add some copy to the homepage about how cool this is
 * Public hosting
 * Figure out scale
-  * Maybe move to official youtube api?
-  * Rate limiting?
-  * User accounts? (looser rate limiting for signed in users)
+  * Move transcript fetching to the invidious api
 * Use a better algorithm for showing duration and consolidation of transcript chunks
 * Add a way to show the transcripts in a different language
 * Video Image alt text
