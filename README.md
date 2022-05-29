@@ -36,8 +36,13 @@ http://localhost:8008/ and it will work.
 * youtube_transcript_api 0.4.4
 
 # TODO
+* choose a random invidious instance if one isn't specified
 * Use a template engine instead of hard-coding html
 * Clean up the design
+  * The W3C's
+    [Web Content Accessibility Guidelines](https://www.w3.org/TR/WCAG21/)
+    seem like a good starting point, not just for users with disabilities
+    but for everyone.
 * Add accessibility features
 * Add search box to the results and transcript pages
 * Add title and other metadata to the transcript pages

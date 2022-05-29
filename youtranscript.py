@@ -5,13 +5,13 @@ import json
 import os
 import socketserver
 import sys
-
 from urllib.request import Request, urlopen
-from youtube_transcript_api import YouTubeTranscriptApi
+
+from get_transcript import get_transcript
 
 
 INVIDIOUS_HOST = os.environ.get('YOUTRANSCRIPT_INVIDIOUS_HOST')
-
+INVIDIOUS_API_URL = f'https://{INVIDIOUS_HOST}/api/v1'
 
 def get_youtube_search_results(search_term: str) -> list[dict]:
     """
@@ -22,26 +22,13 @@ def get_youtube_search_results(search_term: str) -> list[dict]:
     Returns:
         youtube search results as a list of dictionaries.
     """
-    # Get the results via the Invidious API using urllib.request:
     request = Request(
-        f"https://{INVIDIOUS_HOST}/api/v1/search?q={search_term}&type=video"
+        f"{INVIDIOUS_API_URL}/search?q={search_term}&type=video"
     )
 
     with urlopen(request) as response:
         results = json.loads(response.read())
     return results
-
-
-def get_video_link(youtube_id):
-    """
-    Get a link to the transcript page for the video.
-
-    Args:
-        youtube_id: The youtube id of the video. For example: 'bXq4oQ-fXpE'
-    Returns:
-        A relative link to the transcript page for the video.
-    """
-    return f'/transcript?v={youtube_id}'
 
 
 def get_table_with_search_results(results):
@@ -62,7 +49,7 @@ def get_table_with_search_results(results):
     table_parts = ['<table>']
     for video in results:
         youtube_id = video['videoId']
-        link = get_video_link(youtube_id)
+        link = f'/transcript?v={youtube_id}'
         title = video['title']
         thumbnail_url = get_matching_dictionary_from_list(
             video['videoThumbnails'], 'quality', 'medium'
@@ -98,20 +85,6 @@ def get_matching_dictionary_from_list(
             return element
     return {}
 
-
-def get_transcript(youtube_id: str) -> list:
-    """
-    Pull the transcript for a video from YouTube.
-
-    Args:
-        youtube_id: The youtube id of the video. For example: 'bXq4oQ-fXpE'
-    Returns:
-        A list of dictionaries with the start and text of each line.
-    """
-    transcript = YouTubeTranscriptApi.get_transcript(youtube_id)
-    return transcript
-
-
 def get_table_with_transcript(youtube_id: str) -> str:
     """
     Return a html table with the transcript of the video.
@@ -126,23 +99,10 @@ def get_table_with_transcript(youtube_id: str) -> str:
     table_parts = ['<table>']
     transcript = get_transcript(youtube_id)
 
-    last_start = ''
-    for line in transcript:
-        start = human_readable_time_length(line['start'])
-        # Don't repeat the times
-        if start == last_start:
-            start_cell = '&nbsp;'
-        else:
-            last_start = start
-            start_seconds = line['start']
-            start_cell = (
-                '<a href="https://www.youtube.com/watch'
-                f'?v={youtube_id}&t={start_seconds}">{start}</a>'
-            )
-
+    for cue in transcript:
         table_parts.append(table_row_template.format(
-            start=start_cell,
-            text=line['text']
+            start=cue.youtube_link_tag(youtube_id),
+            text=cue.text
         ))
 
     table_parts.append('</table>')
@@ -378,7 +338,7 @@ if __name__ == '__main__':
     if not INVIDIOUS_HOST:
         print(
             'You must set the environment variable'
-            'YOUTRANSCRIPT_INVIDIOUS_HOST'
+            ' YOUTRANSCRIPT_INVIDIOUS_HOST'
         )
         sys.exit(1)
 
