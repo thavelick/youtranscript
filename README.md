@@ -8,11 +8,7 @@ A frontend for youtube that shows transcripts instead of videos.
   ```
   git clone https://github.com/thavelick/youtranscript && cd youtranscript
   ```
-2. Install dependencies
-  ```
-  pip install -r requirements.txt
-  ```
-3. Start the server
+2. Start the server
   ```bash
   # Make sure to use a real invidious host here
   YOUTRANSCRIPT_INVIDIOUS_HOST=your-favorite.invidious.host ./youtranscript.py
@@ -33,7 +29,6 @@ http://localhost:8008/ and it will work.
 
 ## Dependencies
 * Python 3.10
-* youtube_transcript_api 0.4.4
 
 # TODO
 * choose a random invidious instance if one isn't specified
@@ -50,8 +45,6 @@ http://localhost:8008/ and it will work.
 * Add punctuation restoration to auto-generated transcripts
 * Add some copy to the homepage about how cool this is
 * Public hosting
-* Figure out scale
-  * Move transcript fetching to the invidious api
 * Use a better algorithm for showing duration and consolidation of transcript chunks
 * Add a way to show the transcripts in a different language
 * Video Image alt text
