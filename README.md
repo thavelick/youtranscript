@@ -31,7 +31,6 @@ http://localhost:8008/ and it will work.
 * Python 3.10
 
 # TODO
-* deal with bad youtube_ids gracefully (404)
 * choose a random invidious instance if one isn't specified
 * Clean up the design
   * The W3C's

@@ -6,6 +6,7 @@ import os
 import socketserver
 import sys
 from functools import cache
+from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 from get_transcript import get_transcript
@@ -189,8 +190,8 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
         self.wfile.write(text.encode('utf-8'))
 
     def render_redirect(self, location: str) -> None:
-        """Send a permanent redirect response."""
-        self.start_response(301, {'Location': location})
+        """Send a redirect response."""
+        self.start_response(302, {'Location': location})
 
     def render_file(self, file_path: str, content_type) -> None:
         """Send a file response."""
@@ -240,11 +241,34 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
         Shows a list of search results.
         """
         search_term = self.get_query_param('search_term')
-        results = get_youtube_search_results(search_term)
-        table = get_table_with_search_results(results)
+
+        if len(search_term or '') == 0:
+            self.render_redirect('/')
+            return
+
+        try:
+            results = get_youtube_search_results(search_term)
+        except URLError:
+            self.render_html_page_response(
+                title='External Site Error',
+                content="""
+                <h1>External Site Error</h1>
+                <p>
+                    An error occurred when trying to fetch search results.
+                    Please try again later.
+                </p>
+                """
+            )
+            return
+
+        if len(results) == 0:
+            content = '<p>No results found</p>'
+        else:
+            content = get_table_with_search_results(results)
+
         self.render_html_page_response(
             title=f'Search results for "{search_term}"',
-            content=table
+            content=content
         )
 
     def render_transcript_page(self) -> None:
@@ -254,7 +278,15 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
         Shows a transcript for a youtube video.
         """
         youtube_id = self.get_query_param('v')
-        table = get_table_with_transcript(youtube_id)
+        try:
+            table = get_table_with_transcript(youtube_id)
+        except ValueError:
+            self.render_html_page_response(
+                title='Transcript Not Found',
+                content="<p>No transcript found.</p>",
+                status_code=404,
+            )
+            return
         self.render_html_page_response(
             title=f'Transcript for "{youtube_id}"',
             content=table

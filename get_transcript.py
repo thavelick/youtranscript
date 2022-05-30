@@ -9,9 +9,9 @@ Once Invidious is updated to use the innertube api, for transcripts
 much of the code here can be removed.
 """
 
+import json
 from collections import deque
 from dataclasses import dataclass
-import json
 from urllib.request import Request, urlopen
 from pprint import pprint
 
@@ -84,7 +84,10 @@ def _get_youtube_page(url: str) -> str:
     video_page_request = Request(url)
     with urlopen(video_page_request) as response:
         text = response.read().decode('utf-8')
-
+        if "This video is'nt available anymore" in text:
+            raise ValueError("video-page-not-found")
+        elif response.status != 200:
+            raise ValueError("http-error-fetching-video-page")
     return text
 
 
@@ -130,8 +133,9 @@ def _get_transcript_from_innertube_api(
     )
 
     with urlopen(transcript_request) as response:
+        if response.status != 200:
+            raise ValueError("http-error-fetching-transcript")
         transcript_data = json.loads(response.read())
-
     return transcript_data
 
 
