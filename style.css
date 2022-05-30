@@ -1,23 +1,56 @@
-body {
+html {
     font-family: sans-serif;
+    height: 100%;
+}
+
+body {
+    height: 100%;
+}
+
+h1 {
+    font-weight: bold;
+    font-size: 320%;
+    color: #558564;
+    text-align: center;
 }
 
 form {
+    max-width: 50em;
+    margin: auto;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    padding: 1em;
 }
 
 input {
-    margin: 10px;
+    font-family: "Tex Gyre Heros", "Nimbus Sans L", Helvetica, Arial, sans-serif;
+    border-radius: 0.2em;
+    padding: 0.3em 0.2em 0.05em;
+    font-size: 160%;
+    margin-bottom: 0.75em;
 }
 
 input[type="text"] {
-    width: 300px;
+    border: thin solid #564946;
+    outline-color: #564946;
+    background-color: white;
+    color: black;
+    text-align: left;
+    flex: auto;
+    width: 100%;
 }
 
 input[type="submit"] {
-    width: 100px;
-    height: 30px;
-    font-size: 18px;
+    align-self: center;
+    border: thick solid #49D49D;
+    outline-color: #49D49D;
+    background-color: #49D49D;
+    color: black;
+    cursor: pointer;
+    padding: 0.05em;
+}
+
+.homepage {
+    position: relative;
+    top: 25%;
 }

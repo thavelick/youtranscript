@@ -230,8 +230,11 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
         Shows a simple search form.
         """
         self.render_html_page_response(
-            title='Homepage',
-            content=get_template('search_box')
+            title='youTranscript',
+            content=fill_template(
+                'homepage',
+                search_box=get_template('search_box'),
+            )
         )
 
     def render_search_results_page(self) -> None:
