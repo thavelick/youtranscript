@@ -23,7 +23,6 @@ form {
 }
 
 input {
-    font-family: "Tex Gyre Heros", "Nimbus Sans L", Helvetica, Arial, sans-serif;
     border-radius: 0.2em;
     padding: 0.3em 0.2em 0.05em;
     font-size: 160%;
@@ -53,4 +52,15 @@ input[type="submit"] {
 .homepage {
     position: relative;
     top: 25%;
+}
+
+.transcript-page {
+    max-width: 700px;
+    font-size: 15pt;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.playback-speed-section {
+    display: none;
 }

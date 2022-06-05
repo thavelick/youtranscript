@@ -50,6 +50,24 @@ def get_youtube_search_results(search_term: str) -> list[dict]:
     return results
 
 
+def get_video_info(youtube_id):
+    """
+    Return information about a given youtube video.
+
+    Args:
+        youtube_id: The youtube id of the video. For example: 'bXq4oQ-fXpE'
+    Returns:
+        A dictionary with information about the video.
+    """
+    request = Request(
+        f"{INVIDIOUS_API_URL}/videos/{youtube_id}"
+    )
+
+    with urlopen(request) as response:
+        video_info = json.loads(response.read())
+    return video_info
+
+
 def get_table_with_search_results(results: list[dict]) -> str:
     """
     Return a html table with the search results.
@@ -137,6 +155,8 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
             '/search': self.render_search_results_page,
             '/style.css': lambda: self.render_file('style.css', 'text/css'),
             '/transcript': self.render_transcript_page,
+            '/transcript.js':
+                lambda: self.render_file('transcript.js', 'text/javascript'),
             '/watch': self.render_watch_page,
         }
 
@@ -223,18 +243,38 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
         html = fill_template('layout', content=content, title=title)
         self.render_text(html, 'text/html; charset=utf-8', status_code)
 
+    def render_html_page_response_with_template(
+        self,
+        title: str,
+        template_name: str,
+        template_values: dict[str, str]
+    ) -> None:
+        """
+        Send an html page response with a template.
+
+        Args:
+            title: The title of the page.
+            template_name: The name of the template.
+            template_values: The values to fill the template with.
+        """
+        # Set the template title to the page title if it is not set.
+        template_values['title'] = template_values.get('title', title)
+
+        html = fill_template(template_name, **template_values)
+        self.render_html_page_response(title, html)
+
     def render_homepage(self) -> None:
         """
         Handle the homepage.
 
         Shows a simple search form.
         """
-        self.render_html_page_response(
+        self.render_html_page_response_with_template(
             title='youTranscript',
-            content=fill_template(
-                'homepage',
-                search_box=get_template('search_box'),
-            )
+            template_name='homepage',
+            template_values={
+                'search_box': get_template('search_box'),
+            }
         )
 
     def render_search_results_page(self) -> None:
@@ -290,9 +330,30 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
                 status_code=404,
             )
             return
-        self.render_html_page_response(
-            title=f'Transcript for "{youtube_id}"',
-            content=table
+
+        video_info = get_video_info(youtube_id)
+        title = video_info.get('title', 'some video ')
+        audio_record: dict = next(iter([
+            format for format in video_info['adaptiveFormats']
+            if 'audio/mp4' in format.get('type')
+        ]), {})
+        audio_url = audio_record.get('url', '#')
+        description = (
+            video_info
+            .get('descriptionHtml', '')
+            .replace('\n', '<br>')
+        )
+        self.render_html_page_response_with_template(
+            title=f'Transcript for "{title}"',
+            template_name='transcript',
+            template_values={
+
+                'headline': title,
+                'table': table,
+                'audio_url': audio_url,
+                'author': video_info.get('author', 'unknown'),
+                'description': description,
+            },
         )
 
     def render_watch_page(self) -> None:

@@ -1,0 +1,31 @@
+<h1>{headline}</h1>
+<div class='transcript-page'>
+    <dl>
+        <dt>Author:</dt>
+        <dd>{author}</dd>
+        <dt>Audio:</dt>
+        <dd>
+            <div class="playback-speed-section">
+                <a href="#" class="play-audio" data-playback-speed="0.5">0.5x</a> |
+                <a href="#" class="play-audio" data-playback-speed="1.0">1x</a> |
+                <a href="#" class="play-audio" data-playback-speed="1.5">1.5x</a> |
+                <a href="#" class="play-audio" data-playback-speed="2.0">2x</a> |
+                <a href="#" class="play-audio" data-playback-speed="2.5">2.5x</a>
+            </div>
+            <p>
+                <audio src="{audio_url}" controls>
+                    <a href="{audio_url}">Play the audio</a>
+                </audio>
+            </p>
+        </dd>
+
+    </dl>
+
+    <details>
+        <summary>Description</summary>
+        <p>{description}</p>
+    </details>
+
+    {table}
+</div>
+<script src="/transcript.js"></script>

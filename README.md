@@ -33,20 +33,15 @@ http://localhost:8008/ and it will work.
 # TODO
 * choose a random invidious instance if one isn't specified
 * Clean up the design
-  * The W3C's
-    [Web Content Accessibility Guidelines](https://www.w3.org/TR/WCAG21/)
-    seem like a good starting point, not just for users with disabilities
-    but for everyone.
+  * [x] homepage
+  * [ ] search results
+  * [x] transcript
 * Add accessibility features
 * Add search box to the results and transcript pages
-* Add title and other metadata to the transcript pages
-* Commission or make a cool logo
 * Add punctuation restoration to auto-generated transcripts
 * Add some copy to the homepage about how cool this is
 * Public hosting
 * Add a way to show the transcripts in a different language
-* Video Image alt text
-* User testing with screen readers
 * Responsive design
 
 ## Created By
