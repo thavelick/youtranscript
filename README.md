@@ -17,10 +17,11 @@ A frontend for youtube that shows transcripts instead of videos.
 
 ### Environment variables
 
-* `YOUTRANSCRIPT_INVIDIOUS_HOST`: required -  the hostname of the invidious instance
+* `YOUTRANSCRIPT_INVIDIOUS_HOST`: optional -  the hostname of the invidious instance
 to use to pull youtube transcripts and search results. For a list of available
 instances check: https://api.invidious.io/. Make sure you pick one with a
-checkmark for API.
+checkmark for API. If not set a random server listed at https://api.invidious.io/
+will be used
 
 ## Urls
 
@@ -31,7 +32,6 @@ http://localhost:8008/ and it will work.
 * Python 3.10
 
 # TODO
-* choose a random invidious instance if one isn't specified
 * Clean up the design
   * [x] homepage
   * [ ] search results

@@ -3,17 +3,14 @@
 import http.server
 import json
 import os
+from pprint import pprint
+import random
 import socketserver
-import sys
 from functools import cache
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 from get_transcript import get_transcript
-
-
-INVIDIOUS_HOST = os.environ.get('YOUTRANSCRIPT_INVIDIOUS_HOST')
-INVIDIOUS_API_URL = f'https://{INVIDIOUS_HOST}/api/v1'
 
 
 @cache
@@ -37,35 +34,6 @@ def fill_template(name: str, **kwargs) -> str:
     """
     template = get_template(name)
     return template.format(**kwargs)
-
-
-def get_youtube_search_results(search_term: str) -> list[dict]:
-    """Return a list of youtube search results."""
-    request = Request(
-        f"{INVIDIOUS_API_URL}/search?q={search_term}&type=video"
-    )
-
-    with urlopen(request) as response:
-        results = json.loads(response.read())
-    return results
-
-
-def get_video_info(youtube_id):
-    """
-    Return information about a given youtube video.
-
-    Args:
-        youtube_id: The youtube id of the video. For example: 'bXq4oQ-fXpE'
-    Returns:
-        A dictionary with information about the video.
-    """
-    request = Request(
-        f"{INVIDIOUS_API_URL}/videos/{youtube_id}"
-    )
-
-    with urlopen(request) as response:
-        video_info = json.loads(response.read())
-    return video_info
 
 
 def get_table_with_search_results(results: list[dict]) -> str:
@@ -141,6 +109,72 @@ def get_table_with_transcript(youtube_id: str) -> str:
     table_parts.append('</table>')
 
     return ''.join(table_parts)
+
+
+class Invidious:
+    """A class that handles invidious requests."""
+
+    def __init__(self, url: str):
+        """
+        Initialize the invidious class.
+
+        Args:
+            url: The url of the invidious instance.
+        """
+        self.api_url = f"{url}/api/v1"
+        print(f'using invidious at: {self.api_url}')
+
+    def get_search_results(self, search_term: str) -> list[dict]:
+        """Return a list of youtube search results."""
+        request = Request(
+            f"{self.api_url}/search?q={search_term}&type=video"
+        )
+
+        with urlopen(request) as response:
+            results = json.loads(response.read())
+        return results
+
+    def get_video_info(self, youtube_id: str) -> dict:
+        """Return information about a given youtube video."""
+        request = Request(
+            f"{self.api_url}/videos/{youtube_id}"
+        )
+
+        with urlopen(request) as response:
+            video_info = json.loads(response.read())
+        return video_info
+
+
+def get_random_invidious_url() -> str:
+    """Return a random invidious url compatible with the api."""
+    request = Request(
+        """https://api.invidious.io/instances.json?sort_by=type,users"""
+    )
+    with urlopen(request) as response:
+        servers = json.loads(response.read())
+
+    # filter for the https instances where api is true
+    filtered_instances = [
+        server[1] for server in servers
+        if server[1]['api']
+        and server[1]['type'] == 'https'
+    ]
+
+    # return a random one
+    return random.choice(filtered_instances)['uri']
+
+
+def get_invidious_instance() -> Invidious:
+    """Return an invidious instance."""
+    host = os.environ.get('YOUTRANSCRIPT_INVIDIOUS_HOST')
+    if host:
+        url = f"https://{host}"
+    else:
+        url = get_random_invidious_url()
+    return Invidious(url)
+
+
+invidious = get_invidious_instance()
 
 
 class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
@@ -290,7 +324,7 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
             return
 
         try:
-            results = get_youtube_search_results(search_term)
+            results = invidious.get_search_results(search_term)
         except URLError:
             self.render_html_page_response(
                 title='External Site Error',
@@ -331,7 +365,7 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
             )
             return
 
-        video_info = get_video_info(youtube_id)
+        video_info = invidious.get_video_info(youtube_id)
         title = video_info.get('title', 'some video ')
         audio_record: dict = next(iter([
             format for format in video_info['adaptiveFormats']
@@ -347,7 +381,6 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
             title=f'Transcript for "{title}"',
             template_name='transcript',
             template_values={
-
                 'headline': title,
                 'table': table,
                 'audio_url': audio_url,
@@ -363,13 +396,6 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
 
 
 if __name__ == '__main__':
-    if not INVIDIOUS_HOST:
-        print(
-            'You must set the environment variable'
-            ' YOUTRANSCRIPT_INVIDIOUS_HOST'
-        )
-        sys.exit(1)
-
     PORT = 8008
     socketserver.TCPServer.allow_reuse_address = True
     with socketserver.TCPServer(("", PORT), YouTranscriptHandler) as httpd:
