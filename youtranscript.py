@@ -3,7 +3,6 @@
 import http.server
 import json
 import os
-from pprint import pprint
 import random
 import socketserver
 from functools import cache
@@ -111,6 +110,13 @@ def get_table_with_transcript(youtube_id: str) -> str:
     return ''.join(table_parts)
 
 
+def get_json_form_url(url: str):
+    """Return the json from a url."""
+    request = Request(url)
+    with urlopen(request) as response:
+        return json.loads(response.read())
+
+
 class Invidious:
     """A class that handles invidious requests."""
 
@@ -126,34 +132,22 @@ class Invidious:
 
     def get_search_results(self, search_term: str) -> list[dict]:
         """Return a list of youtube search results."""
-        request = Request(
+        return get_json_form_url(
             f"{self.api_url}/search?q={search_term}&type=video"
         )
 
-        with urlopen(request) as response:
-            results = json.loads(response.read())
-        return results
-
     def get_video_info(self, youtube_id: str) -> dict:
         """Return information about a given youtube video."""
-        request = Request(
-            f"{self.api_url}/videos/{youtube_id}"
-        )
-
-        with urlopen(request) as response:
-            video_info = json.loads(response.read())
-        return video_info
+        return get_json_form_url(f"{self.api_url}/videos/{youtube_id}")
 
 
 def get_random_invidious_url() -> str:
     """Return a random invidious url compatible with the api."""
-    request = Request(
-        """https://api.invidious.io/instances.json?sort_by=type,users"""
+    servers = get_json_form_url(
+        """https://api.invidious.io/instances.json?sort_by=type"""
     )
-    with urlopen(request) as response:
-        servers = json.loads(response.read())
 
-    # filter for the https instances where api is true
+    # filter for the https instances with api support
     filtered_instances = [
         server[1] for server in servers
         if server[1]['api']
