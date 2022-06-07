@@ -61,6 +61,18 @@ input[type="submit"] {
     margin-left: auto;
 }
 
+.search-page {
+    max-width: 800px;
+    font-size: 15pt;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.search-page img {
+    margin-bottom: 10px;
+    margin-right: 10px;
+}
+
 .playback-speed-section {
     display: none;
 }

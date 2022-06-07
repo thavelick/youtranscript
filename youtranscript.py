@@ -1,11 +1,13 @@
 #!/usr/bin/python3
 """website that displays the transcripts of a youtube videos."""
+from base64 import encode
 import http.server
 import json
 import os
 import random
 import socketserver
 from functools import cache
+from urllib.parse import unquote_plus
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
@@ -229,13 +231,14 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
                 status_code: int = 200,
             ) -> None:
         """Send an http response with the given text."""
+        encoded_text = text.encode('utf-8')
         self.start_response(
             status_code, {
                 'Content-type': content_type,
-                'Content-length': str(len(text)),
+                'Content-length': str(len(encoded_text)),
             }
         )
-        self.wfile.write(text.encode('utf-8'))
+        self.wfile.write(encoded_text)
 
     def render_redirect(self, location: str) -> None:
         """Send a redirect response."""
@@ -301,7 +304,7 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
             title='youTranscript',
             template_name='homepage',
             template_values={
-                'search_box': get_template('search_box'),
+                'search_box': fill_template('search_box', search_term=''),
             }
         )
 
@@ -312,6 +315,8 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
         Shows a list of search results.
         """
         search_term = self.get_query_param('search_term')
+        decoded_search_term = unquote_plus(search_term)
+        title = f'Search results for "{decoded_search_term}"'
 
         if len(search_term or '') == 0:
             self.render_redirect('/')
@@ -319,27 +324,30 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
 
         try:
             results = invidious.get_search_results(search_term)
+            if len(results) > 0:
+                content = get_table_with_search_results(results)
+            else:
+                content = '<p>No results found</p>'
         except URLError:
-            self.render_html_page_response(
-                title='External Site Error',
-                content="""
-                <h1>External Site Error</h1>
+            title = 'External Site Error'
+            content = """
                 <p>
                     An error occurred when trying to fetch search results.
                     Please try again later.
                 </p>
                 """
-            )
-            return
 
-        if len(results) == 0:
-            content = '<p>No results found</p>'
-        else:
-            content = get_table_with_search_results(results)
-
-        self.render_html_page_response(
-            title=f'Search results for "{search_term}"',
-            content=content
+        self.render_html_page_response_with_template(
+            title,
+            'search',
+            {
+                'headline': title,
+                'content': content,
+                'search_box': fill_template(
+                    'search_box',
+                    search_term=decoded_search_term
+                ),
+            }
         )
 
     def render_transcript_page(self) -> None:
@@ -360,7 +368,7 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
             return
 
         video_info = invidious.get_video_info(youtube_id)
-        title = video_info.get('title', 'some video ')
+        title = video_info.get('title', 'some video')
         audio_record: dict = next(iter([
             format for format in video_info['adaptiveFormats']
             if 'audio/mp4' in format.get('type')
@@ -380,6 +388,7 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
                 'audio_url': audio_url,
                 'author': video_info.get('author', 'unknown'),
                 'description': description,
+                'search_box': fill_template('search_box', search_term=''),
             },
         )
 
