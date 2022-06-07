@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 """website that displays the transcripts of a youtube videos."""
-from base64 import encode
 import http.server
 import json
 import os

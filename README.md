@@ -1,5 +1,9 @@
 # youTranscript
 
+[![](https://tokei.rs/b1/github/thavelick/youtranscript)](https://tokei.rs/b1/github/thavelick/youtranscript)
+[![Maintainability](https://api.codeclimate.com/v1/badges/e14cb3a0b59f1db8f3f5/maintainability)](https://codeclimate.com/github/thavelick/youtranscript/maintainability)
+
+
 A frontend for youtube that shows transcripts instead of videos.
 
 ## Installation and Usage
