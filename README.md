@@ -6,6 +6,9 @@
 
 A frontend for youtube that shows transcripts instead of videos.
 
+## Instances
+* [youtranscript.tristanhavelick.com](https://youtranscript.tristanhavelick.com)
+
 ## Installation and Usage
 
 1. Clone
@@ -39,7 +42,6 @@ http://localhost:8008/ and it will work.
 * Add accessibility features
 * Add punctuation restoration to auto-generated transcripts
 * Add some copy to the homepage about how cool this is
-* Public hosting
 * Add a way to show the transcripts in a different language
 * Responsive design
 * Add channel page
