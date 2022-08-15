@@ -9,6 +9,7 @@ from functools import cache
 from urllib.parse import unquote_plus
 from urllib.error import URLError
 from urllib.request import Request, urlopen
+from typing import Union
 
 from get_transcript import get_transcript
 
@@ -206,7 +207,7 @@ class YouTranscriptHandler(http.server.BaseHTTPRequestHandler):
             path = path[:path.index('?')]
         return path
 
-    def get_query_string_if_exists(self) -> str | None:
+    def get_query_string_if_exists(self) -> Union[str,None]:
         """Return the query string if it exists."""
         if '?' in self.path:
             return self.path[self.path.index('?') + 1:]

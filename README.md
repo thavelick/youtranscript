@@ -33,7 +33,7 @@ The urls should mostly correspond to youtube.com ones, so you can replace https:
 http://localhost:8008/ and it will work.
 
 ## Dependencies
-* Python 3.10
+* Python 3.9
 
 # TODO
 * Add accessibility features
