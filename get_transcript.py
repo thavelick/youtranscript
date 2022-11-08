@@ -117,11 +117,11 @@ def _get_transcript_from_innertube_api(
     )
     payload = {
         "context": {
-                "client": {
-                    "userAgent": user_agent,
-                    "clientName": "WEB",
-                    "clientVersion": "2.20220309.01.00",
-                }
+            "client": {
+                "userAgent": user_agent,
+                "clientName": "WEB",
+                "clientVersion": "2.20220309.01.00",
+            }
         },
         "params": serialized_share_entity
     }
