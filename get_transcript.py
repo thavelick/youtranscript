@@ -162,6 +162,9 @@ def get_transcript(youtube_id: str) -> list[TranscriptCue]:
         innertube_api_key
     )
 
+    if not transcript_data.get('actions'):
+        return []
+
     for action in transcript_data['actions']:
         for group in (
                 action['updateEngagementPanelAction']['content']
